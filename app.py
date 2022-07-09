@@ -128,9 +128,8 @@ def get_profile():
 def parking(current_user):
     parking_all = Parking.query.all()
     result = parking_all_schema.dump(parking_all)
-
-    print(jsonify(result))
-    return jsonify(result)
+    res = construct_response(status="success", message="", data=result)
+    return make_response(jsonify(res), 200)
 
 # @app.route('/add_parking', methods=['GET'])
 # @token_required
