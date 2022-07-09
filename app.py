@@ -20,7 +20,7 @@ marshmallow = Marshmallow(app)
 
 
 class Login(db.Model):
-    __tablename__ = "Login"
+    __tablename__ = "login"
     Login_id = db.Column(db.Integer, primary_key=True)
     Login_username = db.Column(db.String(70), unique=True)
     Login_password = db.Column(db.String(500))
@@ -34,7 +34,7 @@ class Login(db.Model):
 
 
 class Parking(db.Model):
-    __tablename__ = "Parking_Lot"
+    __tablename__ = "parking_lot"
     Parking_lot_id = db.Column(BIGINT(unsigned=True), primary_key=True)
     Parking_lot_address = db.Column(db.String(500))
     Parking_lot_code = db.Column(db.String(70))
