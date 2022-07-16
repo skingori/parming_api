@@ -44,7 +44,19 @@ class Parking(db.Model):
         self.Parking_lot_address = address
         self.Parking_lot_code = code
 
-
+class Vehicle(db.Model):
+    __tablename__ = "Vehicle_category"
+    Vehicle_category_id = db.Column(BIGINT(unsigned=True), primary_key=True)
+    Vehicle_category_name = db.Column(db.String(100))
+    Vehicle_category_desc = db.Column(db.String(500))
+    Vehicle_category_daily_parking_fee = db.Column(db.String(100))
+    
+    def __init__(self, id_, name, desc, fee):
+        self.Vehicle_category_id = id_
+        self.Vehicle_category_name = name
+        self.Vehicle_category_desc = desc
+        self.Vehicle_category_daily_parking_fee = fee
+        
 class LoginSchema(marshmallow.Schema):
     class Meta:
         fields = ('Login_id', 'Login_username', 'Login_password', 'Login_rank')
@@ -54,7 +66,9 @@ class ParkingSchema(marshmallow.Schema):
     class Meta:
         fields = ('Parking_lot_id', 'Parking_lot_address', 'Parking_lot_code')
 
-
+class VehicleSchema(marshmallow.Schema):
+    class Meta:
+        fields = ('Vehicle_category_id', 'Vehicle_category_name', 'Vehicle_category_desc', 'Vehicle_category_daily_parking_fee')
 class TaskSchema(marshmallow.Schema):
     class Meta:
         fields = ('id', 'title', 'description')
@@ -69,6 +83,9 @@ logins_schema = LoginSchema(many=True)
 parking_schema = ParkingSchema()
 parking_all_schema = ParkingSchema(many=True)
 
+vehicle_category_schema = VehicleSchema()
+vehicle_all_schema = VehicleSchema(many=True)
+
 db.create_all()
 
 
@@ -81,12 +98,12 @@ def token_required(f):
             token = request.headers['Authorization']
 
         if not token:
-            return jsonify({'message': 'a valid token is missing'})
+            return jsonify({'message': 'a valid token is missing', 'status': False, 'error': 'invalid token'})
         try:
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
             current_user = Login.query.filter_by(Login_id=data['Login_id']).first()
-        except:
-            return jsonify({'message': 'token is invalid'})
+        except Exception as ex:
+            return jsonify({'message': 'token is invalid', 'error': f'{ex}'})
 
         return f(current_user, *args, **kwargs)
 
@@ -104,13 +121,12 @@ def registration():
         new_user = Login(user_id, username, password_hash, level)
         db.session.add(new_user)
         db.session.commit()
-        # user = login_schema.jsonify(new_user)
-        # print(jsonify(user))
-        body = {"token": str(user_id), "username": str(username), "error": None}
+        test = login_schema.dump(new_user)
+        body = {"token": str(user_id), "username": str(username), "error": ""}
         print(body)
         status = True
         message = ""
-        response = construct_response(status=status, message=message, data=body)
+        response = construct_response(status=status, message=message, data=test)
         return jsonify(response)
     except Exception as kk:
         message_ = "Wrong enry, check details again"
@@ -126,14 +142,15 @@ def get_profile():
 @app.route('/parking', methods=['GET'])
 @token_required
 def parking(current_user):
-    parking_all = Parking.query.all()
-    result = parking_all_schema.dump(parking_all)
-    res = construct_response(status="success", message="", data=result)
-    return make_response(jsonify(res), 200)
-
-# @app.route('/add_parking', methods=['GET'])
-# @token_required
-# def add_parking():
+    try:
+        parking_all = Parking.query.all()
+        result = parking_all_schema.dump(parking_all)
+        res = construct_response(status=True, message="", data=result)
+        print(make_response(jsonify(res), 200))
+        return make_response(jsonify(res), 200)
+    except Exception as ex:
+        res = construct_response(status=False, message="", error=f'{ex}')
+        return make_response(jsonify(res), 200)
 
 
 @app.route('/login', methods=['POST'])
@@ -173,11 +190,42 @@ def create():
         return redirect('/admin')
 
 
-def construct_response(status, message, data=None):
+# add vehicle:
+@app.route('/vehicle', methods=['POST'])
+@token_required
+def vehicle(current_user):
+    try:
+        vehicle_id = request.json['vehicle_id']
+        vehicle_category = request.json['vehicle_category']
+        vehicle_description = request.json['vehicle_description']
+        vehicle_fee = request.json['vehicle_fee']
+        new_vehicle = Vehicle(vehicle_id, vehicle_category, vehicle_description, vehicle_fee)
+        db.session.add(new_vehicle)
+        db.session.commit()
+        res = vehicle_category_schema.dump(new_vehicle)
+        return construct_response(status=True, message="", data=res)
+    except Exception as ex:
+        return jsonify({'message': 'Wrong enry, check details again', 'error': f'{ex}'})
+
+# get vehicles:
+@app.route('/vehicles', methods=['GET'])
+@token_required
+def vehicles(current_user):
+    try:
+        vehicle_all = Vehicle.query.all()
+        result = vehicle_all_schema.dump(vehicle_all)
+        res = construct_response(status=True, message="", data=result)
+        return make_response(jsonify(res), 200)
+    except Exception as ex:
+        res = construct_response(status=False, message="", error=f'{ex}')
+        return make_response(jsonify(res), 200)
+
+def construct_response(status, message, error=None, data=None):
     return {
-        "status": status,
-        "message": message,
-        "data": data
+        "status": bool(status),
+        "message": str(message),
+        "data": data,
+        "error": str(error)
     }
 
 
