@@ -1,3 +1,4 @@
+from email import message
 import jwt
 import datetime
 from functools import wraps
@@ -207,6 +208,7 @@ def vehicle(current_user):
     except Exception as ex:
         return jsonify({'message': 'Wrong enry, check details again', 'error': f'{ex}'})
 
+
 # get vehicles:
 @app.route('/vehicles', methods=['GET'])
 @token_required
@@ -219,6 +221,39 @@ def vehicles(current_user):
     except Exception as ex:
         res = construct_response(status=False, message="", error=f'{ex}')
         return make_response(jsonify(res), 200)
+
+@app.route('/vehicle/edit', methods=['PATCH'])
+@token_required
+def update_todo_by_id(curent_user):
+    try:
+        data = request.get_json()
+        if data.get('vehicle_id'):
+            id = data['vehicle_id']
+            all_data = Vehicle.query.get(id)
+        if data.get('vehicle_category'):
+            all_data.Vehicle_category_name = data['vehicle_category']
+        if data.get('vehicle_description'):
+            all_data.Vehicle_category_desc = data['vehicle_description']
+        if data.get('vehicle_fee'):
+            all_data.Vehicle_category_daily_parking_fee = data['vehicle_fee']
+        db.session.add(all_data)
+        db.session.commit()
+        ve_schema = VehicleSchema(only=['Vehicle_category_id', 'Vehicle_category_name', 'Vehicle_category_desc', 'Vehicle_category_daily_parking_fee'])
+        res = ve_schema.dump(all_data)
+        res = construct_response(status=True, message="", data=res)
+        return make_response(jsonify(res), 200)
+    except Exception as ex:
+        message = "Wrong enry, check details again"
+        res = construct_response(status=False, message=message, error=f'{ex}')
+        return make_response(jsonify(res), 200)
+
+
+@app.route('/api/v1/todo/<id>', methods=['DELETE'])
+def delete_todo_by_id(id):
+    get_todo = Todo.query.get(id)
+    db.session.delete(get_todo)
+    db.session.commit()
+    return make_response("", 204)
 
 def construct_response(status, message, error=None, data=None):
     return {

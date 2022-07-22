@@ -1,5 +1,5 @@
- flask
- flask-sqlalchemy
- flask-marshmallow
- marshmallow-sqlalchemy
- pymysql
+flask
+flask-sqlalchemy
+flask-marshmallow
+marshmallow-sqlalchemy
+pymysql
