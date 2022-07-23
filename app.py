@@ -330,7 +330,7 @@ def delete_vehicle(current_user):
 def reservation(current_user):
     try:
         get_current_date_time = dt.now()
-        date_time_format = "%d-%m-%Y %H:%M:%S.%f"
+        date_time_format = "%d-%m-%Y %H:%M:%S"
         timestampStr = dt.strptime(get_current_date_time.strftime(date_time_format), date_time_format)
         if request.json['reservation_parking']:
             time_gotten = request.json['reservation_date']
@@ -348,6 +348,7 @@ def reservation(current_user):
             db.session.add(new_reservation)
             db.session.commit()
             res = reservation_schema.dump(new_reservation)
+            print(res, '+++++++++++++++++++++++++++++++++++++++++++++++')
             return construct_response(status=True, message="", data=res)
     except Exception as ex:
         return jsonify({'message': 'Wrong enry, check details again', 'error': f'{ex}'})
