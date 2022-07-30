@@ -51,22 +51,24 @@ class Parking(db.Model):
         self.Parking_lot_address = address
         self.Parking_lot_code = code
 
+
 class Vehicle(db.Model):
     __tablename__ = "Vehicle_category"
     Vehicle_category_id = db.Column(BIGINT(unsigned=True), primary_key=True)
     Vehicle_category_name = db.Column(db.String(100))
     Vehicle_category_desc = db.Column(db.String(500))
     Vehicle_category_daily_parking_fee = db.Column(db.String(100))
-    
+
     def __init__(self, id_, name, desc, fee):
         self.Vehicle_category_id = id_
         self.Vehicle_category_name = name
         self.Vehicle_category_desc = desc
         self.Vehicle_category_daily_parking_fee = fee
 
+
 class Reservation(db.Model):
     __tablename__ = "Parking_Slot_Reservation"
-    Reservation_slot_id = db.Column(db.Integer , primary_key=True, autoincrement=True)
+    Reservation_slot_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     Parking_slot_reservation_duration = db.Column(db.String(100))
     Parking_slot_reservation_vehicle_category_id = db.Column(BIGINT(unsigned=True))
     Parking_slot_reservation_Parking_lot_id = db.Column(BIGINT(unsigned=True))
@@ -74,7 +76,7 @@ class Reservation(db.Model):
     Parking_slot_reservation_booking_date = db.Column(db.DateTime, default=datetime.datetime.now)
     Parking_slot_reservation_start_timestamp = db.Column(TIMESTAMP, nullable=False, server_default=func.now())
     Parking_slot_reservation_vehicle_reg_no = db.Column(db.String(100))
-    
+
     def __init__(self, duration, category, lot, driver, date, reg):
         self.Parking_slot_reservation_duration = duration
         self.Parking_slot_reservation_vehicle_category_id = category
@@ -82,33 +84,41 @@ class Reservation(db.Model):
         self.Parking_slot_reservation_driver_id = driver
         self.Parking_slot_reservation_booking_date = date
         self.Parking_slot_reservation_vehicle_reg_no = reg
-        
+
+
 class Slot(db.Model):
     __tablename__ = "Parking_Slip"
-    Parking_slip_id = db.Column(db.Integer , primary_key=True, autoincrement=True)
+    Parking_slip_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     Parking_slip_entry_time = db.Column(TIMESTAMP, nullable=False, server_default=func.now())
     Parking_slip_exit_time = db.Column(db.DateTime, default=datetime.datetime.now)
     Parking_slip_basic_cost = db.Column(db.String(100))
     Parking_slip_penalty = db.Column(db.String(100))
     Parking_slip_total_cost = db.Column(db.String(100))
     Parking_slip_parking_slot_reservation_id = db.Column(BIGINT(unsigned=True))
-    
+
     def __init__(self, exit, basic, penalty, total, reservation):
         self.Parking_slip_exit_time = exit
         self.Parking_slip_basic_cost = basic
         self.Parking_slip_penalty = penalty
         self.Parking_slip_total_cost = total
         self.Parking_slip_parking_slot_reservation_id = reservation
-        
+
 
 class SlotSchema(marshmallow.Schema):
     class Meta:
-        fields = ('Parking_slip_id', 'Parking_slip_entry_time', 'Parking_slip_exit_time', 'Parking_slip_basic_cost', 'Parking_slip_penalty', 'Parking_slip_total_cost', 'Parking_slip_parking_slot_reservation_id')
+        fields = ('Parking_slip_id', 'Parking_slip_entry_time', 'Parking_slip_exit_time', 'Parking_slip_basic_cost',
+                  'Parking_slip_penalty', 'Parking_slip_total_cost', 'Parking_slip_parking_slot_reservation_id')
+
 
 class ReservationSchema(marshmallow.Schema):
     class Meta:
-        fields = ("Reservation_slot_id", "Parking_slot_reservation_duration", "Parking_slot_reservation_vehicle_category_id", "Parking_slot_reservation_Parking_lot_id", "Parking_slot_reservation_driver_id", "Parking_slot_reservation_booking_date", "Parking_slot_reservation_start_timestamp", "Parking_slot_reservation_vehicle_reg_no")
-        
+        fields = (
+        "Reservation_slot_id", "Parking_slot_reservation_duration", "Parking_slot_reservation_vehicle_category_id",
+        "Parking_slot_reservation_Parking_lot_id", "Parking_slot_reservation_driver_id",
+        "Parking_slot_reservation_booking_date", "Parking_slot_reservation_start_timestamp",
+        "Parking_slot_reservation_vehicle_reg_no")
+
+
 class LoginSchema(marshmallow.Schema):
     class Meta:
         fields = ('Login_id', 'Login_username', 'Login_password', 'Login_rank')
@@ -118,9 +128,13 @@ class ParkingSchema(marshmallow.Schema):
     class Meta:
         fields = ('Parking_lot_id', 'Parking_lot_address', 'Parking_lot_code')
 
+
 class VehicleSchema(marshmallow.Schema):
     class Meta:
-        fields = ('Vehicle_category_id', 'Vehicle_category_name', 'Vehicle_category_desc', 'Vehicle_category_daily_parking_fee')
+        fields = (
+        'Vehicle_category_id', 'Vehicle_category_name', 'Vehicle_category_desc', 'Vehicle_category_daily_parking_fee')
+
+
 class TaskSchema(marshmallow.Schema):
     class Meta:
         fields = ('id', 'title', 'description')
@@ -183,8 +197,7 @@ def registration():
         body = {"token": str(user_id), "username": str(username), "error": ""}
         print(body)
         status = True
-        message = ""
-        response = construct_response(status=status, message=message, data=test)
+        response = construct_response(status=status, message="", data=test)
         return jsonify(response)
     except Exception as kk:
         message_ = "Wrong enry, check details again"
@@ -201,7 +214,8 @@ def get_profile():
 @token_required
 def parking(current_user):
     try:
-        stmt = exists().where(Reservation.Parking_slot_reservation_Parking_lot_id == Parking.Parking_lot_id, Reservation.Parking_slot_reservation_booking_date > dt.now())
+        stmt = exists().where(Reservation.Parking_slot_reservation_Parking_lot_id == Parking.Parking_lot_id,
+                              Reservation.Parking_slot_reservation_booking_date > dt.now())
         q = db.session.query(Parking).filter(~stmt)
         result = parking_all_schema.dump(q)
         res = construct_response(status=True, message="", data=result)
@@ -221,7 +235,8 @@ def login():
     user = Login.query.filter_by(Login_username=username).first()
     if not auth and user is not None and check_password_hash(user.Login_password, password):
         token = jwt.encode(
-            {'Login_id': user.Login_id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=45)},
+            dict(Login_id=user.Login_id, username=user.Login_username,
+                 exp=datetime.datetime.utcnow() + datetime.timedelta(minutes=45)),
             app.config['SECRET_KEY'], "HS256")
         status = True
         message = "User logged in"
@@ -247,6 +262,14 @@ def create():
         db.session.commit()
         task_schema.jsonify(new_user)
         return redirect('/admin')
+
+
+@app.route('/reports', methods=['GET', 'POST'])
+def reports():
+    if request.method == 'GET':
+        reservations = Reservation.query.all()
+        result = reservations_schema.dump(reservations)
+        return render_template('reports.html', title='Reports', users=result)
 
 
 # add vehicle:
@@ -280,29 +303,38 @@ def vehicles(current_user):
         res = construct_response(status=False, message="", error=f'{ex}')
         return make_response(jsonify(res), 200)
 
+
 @app.route('/vehicle/edit', methods=['PATCH'])
 @token_required
-def edit_vehicle(curent_user):
+def edit_vehicle(current_user):
     try:
         data = request.get_json()
-        if data.get('vehicle_id'):
-            id = data['vehicle_id']
-            all_data = Vehicle.query.get(id)
-        if data.get('vehicle_category'):
-            all_data.Vehicle_category_name = data['vehicle_category']
-        if data.get('vehicle_description'):
-            all_data.Vehicle_category_desc = data['vehicle_description']
-        if data.get('vehicle_fee'):
-            all_data.Vehicle_category_daily_parking_fee = data['vehicle_fee']
-        db.session.add(all_data)
-        db.session.commit()
-        ve_schema = VehicleSchema(only=['Vehicle_category_id', 'Vehicle_category_name', 'Vehicle_category_desc', 'Vehicle_category_daily_parking_fee'])
-        res_ = ve_schema.dump(all_data)
-        res = construct_response(status=True, message="", data=res_)
-        return make_response(jsonify(res), 200)
+        if data['vehicle_id'] is not None:
+            vehicle_ = Vehicle.query.filter_by(Vehicle_category_id=data['vehicle_id']).first()
+            vehicle_.Vehicle_category_name = data['vehicle_category']
+            vehicle_.Vehicle_category_desc = data['vehicle_description']
+            vehicle_.Vehicle_category_daily_parking_fee = data['vehicle_fee']
+            db.session.commit()
+            res = vehicle_category_schema.dump(vehicle_)
+            return construct_response(status=True, message="", data=res)
+        # if data.get('vehicle_id'):
+        #     id_ = data['vehicle_id']
+        #     all_data = Vehicle.query.get(id_)
+        # if data.get('vehicle_category'):
+        #     all_data.Vehicle_category_name = data['vehicle_category']
+        # if data.get('vehicle_description'):
+        #     all_data.Vehicle_category_desc = data['vehicle_description']
+        # if data.get('vehicle_fee'):
+        #     all_data.Vehicle_category_daily_parking_fee = data['vehicle_fee']
+        #     db.session.commit()
+        #     ve_schema = VehicleSchema(only=['Vehicle_category_id', 'Vehicle_category_name', 'Vehicle_category_desc',
+        #                                     'Vehicle_category_daily_parking_fee'])
+        #     res_ = ve_schema.dump(all_data)
+        #     res = construct_response(status=True, message="", data=res_)
+        #     return make_response(jsonify(res), 200)
     except Exception as ex:
-        message = "Wrong enry, check details again"
-        res = construct_response(status=False, message=message, error=f'{ex}')
+        message_ = "Wrong enry, check details again"
+        res = construct_response(status=False, message=message_, error=f'{ex}')
         return make_response(jsonify(res), 200)
 
 
@@ -313,17 +345,18 @@ def delete_vehicle(current_user):
         if request.method == 'DELETE':
             data = request.get_json()
             if data.get('vehicle_id'):
-                id = data['vehicle_id']
-                all_data = Vehicle.query.get(id)
+                id_ = data['vehicle_id']
+                all_data = Vehicle.query.get(id_)
             db.session.delete(all_data)
             db.session.commit()
             res_ = vehicle_category_schema.dump(all_data)
             res = construct_response(status=True, message="", data=res_)
             return make_response(jsonify(res), 200)
     except Exception as ex:
-            message = "Wrong enry, check details again"
-            res = construct_response(status=False, message=message, error=f'{ex}')
-            return make_response(jsonify(res), 200)
+        message_ = "Wrong enry, check details again"
+        res = construct_response(status=False, message=message_, error=f'{ex}')
+        return make_response(jsonify(res), 200)
+
 
 @app.route('/reservation', methods=['POST'])
 @token_required
@@ -331,39 +364,41 @@ def reservation(current_user):
     try:
         get_current_date_time = dt.now()
         date_time_format = "%d-%m-%Y %H:%M:%S"
-        timestampStr = dt.strptime(get_current_date_time.strftime(date_time_format), date_time_format)
+        timestamp_str = dt.strptime(get_current_date_time.strftime(date_time_format), date_time_format)
         if request.json['reservation_parking']:
             time_gotten = request.json['reservation_date']
-            future_date_time_ob =  dt.strptime(time_gotten, date_time_format)
+            future_date_time_ob = dt.strptime(time_gotten, date_time_format)
             # Get interval between two timstamps as timedelta object
-            diff = future_date_time_ob - timestampStr
+            diff = future_date_time_ob - timestamp_str
             # Get interval between two timstamps in hours
             # to 2 decimal places
-            reservation_duration = divmod(diff.total_seconds(), 60)[0] # reservation_duration in hours
-            reservation_vehicle = request.json['reservation_vehicle']   # reservation_vehicle
-            reservation_driver = request.json['reservation_driver'] # reservation_driver
-            reservation_parking = request.json['reservation_parking']   # reservation_parking
-            reservation__category = request.json['reservation__category'] # reservation__category
-            new_reservation = Reservation(reservation_duration, reservation__category, reservation_parking, reservation_driver, future_date_time_ob, reservation_vehicle)
+            reservation_duration = divmod(diff.total_seconds(), 60)[0]  # reservation_duration in hours
+            reservation_vehicle = request.json['reservation_vehicle']  # reservation_vehicle
+            reservation_driver = request.json['reservation_driver']  # reservation_driver
+            reservation_parking = request.json['reservation_parking']  # reservation_parking
+            reservation__category = request.json['reservation__category']  # reservation__category
+            new_reservation = Reservation(reservation_duration, reservation__category, reservation_parking,
+                                          reservation_driver, future_date_time_ob, reservation_vehicle)
             db.session.add(new_reservation)
             db.session.commit()
             res = reservation_schema.dump(new_reservation)
-            print(res, '+++++++++++++++++++++++++++++++++++++++++++++++')
             return construct_response(status=True, message="", data=res)
     except Exception as ex:
         return jsonify({'message': 'Wrong enry, check details again', 'error': f'{ex}'})
+
 
 @app.route('/reservations', methods=['GET'])
 @token_required
 def reservations(current_user):
     try:
-        reservations = Reservation.query.all()
-        result = reservations_schema.dump(reservations)
+        reservations_ = Reservation.query.all()
+        result = reservations_schema.dump(reservations_)
         res = construct_response(status=True, message="", data=result)
         return make_response(jsonify(res), 200)
-    except Exception as ex:
-        res = construct_response(status=False, message="", error=f'{ex}')
+    except Exception as ex_:
+        res = construct_response(status=False, message="", error=f'{ex_}')
         return make_response(jsonify(res), 200)
+
 
 @app.route('/clear_reservation', methods=['POST'])
 @token_required
@@ -371,17 +406,18 @@ def clear_reservation(current_user):
     try:
         if request.json['reservation_id']:
             r_id = request.json['reservation_id']
-            reservation = Reservation.query.get(r_id)
+            reservation_ = Reservation.query.get(r_id)
             reservation.Parking_slot_reservation_booking_date = dt.now()
             db.session.add(reservation)
             db.session.commit()
-            res = reservation_schema.dump(reservation)
+            res = reservation_schema.dump(reservation_)
             return construct_response(status=True, message="", data=res)
     except Exception as ex:
-        message = "Wrong enry, check details again"
-        res = construct_response(status=False, message=message, error=f'{ex}')
+        message_ = "Wrong enry, check details again"
+        res = construct_response(status=False, message=message_, error=f'{ex}')
         return make_response(jsonify(res), 200)
-    
+
+
 @app.route('/confirm_parking', methods=['POST'])
 @token_required
 def confirm_parking(current_user):
@@ -389,9 +425,10 @@ def confirm_parking(current_user):
         reservation_id = request.json['reservation_id']
         exit_time = request.json['exit_time']
         basic_cost = request.json['basic_cost']
-        slip_penalty  = request.json['slip_penalty']
+        slip_penalty = request.json['slip_penalty']
         total_cost = request.json['total_cost']
-        new_confirm = Slot(exit=exit_time, basic=basic_cost, penalty=slip_penalty, total=total_cost, reservation=reservation_id)
+        new_confirm = Slot(exit=exit_time, basic=basic_cost, penalty=slip_penalty, total=total_cost,
+                           reservation=reservation_id)
         db.session.add(new_confirm)
         db.session.commit()
 
@@ -399,6 +436,7 @@ def confirm_parking(current_user):
         return construct_response(status=True, message="", data=res)
     except Exception as ex:
         return jsonify({'message': 'Wrong enry, check details again', 'error': f'{ex}'})
+
 
 def construct_response(status, message, error=None, data=None):
     return {

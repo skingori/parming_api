@@ -27,19 +27,17 @@
             <div class="card card-2">
                 <div class="card-heading"></div>
                 <div class="card-body">
-                    <form method="POST" action="">
+                    <h2 class="title">Login</h2>
+                    <form method="POST" action="{{url_for('login')}}">
+                        @csrf
                         <div class="input-group">
-                            <input class="input--style-2" type="text" placeholder="Parking ID" name="parking_id" required>
+                            <input class="input--style-2" type="text" placeholder="Username" name="username">
                         </div>
                         <div class="input-group">
-                             <input class="input--style-2" type="text" placeholder="Address" name="address" required>
+                            <input class="input--style-2" type="password" placeholder="Password" name="password">
                         </div>
-                        <div class="input-group">
-                             <input class="input--style-2" type="text" placeholder="Parking code" name="code" required>
-                        </div>
-                        <div class="p-t-30">
-                            <button class="btn btn--radius btn--green" type="submit">Add Parking</button>
-                            <a href="" class="btn btn--radius btn--green">Reports</a>
+                        <div class="p-t-20">
+                            <button class="btn btn--radius btn--green" type="submit">Login</button>
                         </div>
                     </form>
                 </div>
